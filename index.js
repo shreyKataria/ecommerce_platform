@@ -56,6 +56,7 @@ if (cluster.isMaster) {
 
   // server
   if (process.env.NODE_ENV === "production") {
+    // not able to generate ssl key and cert the server will run on development for production need ssl certificate will change later
     const options = {
       key: fs.readFileSync(process.env.SSL_KEY_PATH),
       cert: fs.readFileSync(process.env.SSL_CERT_PATH),
