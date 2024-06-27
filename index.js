@@ -5,9 +5,10 @@ const app = express();
 
 // imports
 const connectDB = require("./config/db");
-const userRoute = require("./routes/userrouter");
+const userRoutes = require("./routes/userRoute");
 const bodyParser = require("body-parser");
-const productRoute = require("./routes/productsRoute");
+const productRoutes = require("./routes/productsRoute");
+const orderRoutes = require("./routes/orderRoute");
 
 // host
 const port = process.env.PORT || 8000;
@@ -20,8 +21,9 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 // routes
-app.use("/api", userRoute);
-app.use("/api", productRoute);
+app.use("/api", userRoutes);
+app.use("/api", productRoutes);
+app.use("/api", orderRoutes);
 
 // server
 app.listen(port, () => {
