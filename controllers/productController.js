@@ -29,7 +29,6 @@ const createProduct = asyncHandler(async (req, res) => {
     brand,
     category,
     description,
-    rating,
     countInStock,
     numReviews,
   } = req.body;
@@ -43,7 +42,6 @@ const createProduct = asyncHandler(async (req, res) => {
     countInStock: countInStock,
     numReviews: numReviews,
     description: description,
-    rating: rating,
   });
 
   const createdProduct = await product.save();

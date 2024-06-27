@@ -17,15 +17,14 @@ const productSchema = mongoose.Schema(
     countInStock: {
       type: Number,
       required: true,
-      default: 0,
     },
     rating: {
-      type: Number,
-      required: true,
+      type: String,
+      default: "good",
     },
     numReviews: {
       type: Number,
-      required: true,
+      default: 0,
     },
   },
   {

@@ -1,9 +1,18 @@
 const Order = require("../model/orderModel");
 const asyncHandler = require("express-async-handler");
+const { mockStripe, mockPayPal } = require("../mocks/paymentMocks");
+const ErrorResponse = require("../utils/errorResponse");
+const Product = require("../model/productModel");
+const mockLogistics = require("../mocks/logisticMocks");
+
+// mock payments
+mockStripe();
+mockPayPal();
+mockLogistics();
 
 // @route   POST /api/orders
 
-const addOrderItems = asyncHandler(async (req, res) => {
+const addOrderItems = asyncHandler(async (req, res, next) => {
   const {
     orderItems,
     shippingAddress,
@@ -19,8 +28,8 @@ const addOrderItems = asyncHandler(async (req, res) => {
     throw new Error("No order items");
   } else {
     const order = new Order({
-      user: req.user._id,
       orderItems,
+      user: req.user._id,
       shippingAddress,
       paymentMethod,
       itemsPrice,
@@ -31,13 +40,26 @@ const addOrderItems = asyncHandler(async (req, res) => {
 
     const createdOrder = await order.save();
 
+    // Update stock for each product in the order
+    for (const item of orderItems) {
+      const product = await Product.findById(item.product);
+
+      if (product) {
+        product.countInStock -= item.qty;
+        await product.save();
+      } else {
+        res.status(404);
+        throw new Error(`Product not found: ${item.product}`);
+      }
+    }
+
     res.status(201).json(createdOrder);
   }
 });
 
 /// @route   GET /api/orders/:id
 
-const getOrderById = asyncHandler(async (req, res) => {
+const getOrderById = asyncHandler(async (req, res, next) => {
   const order = await Order.findById(req.params.id).populate(
     "user",
     "name email"
@@ -46,14 +68,13 @@ const getOrderById = asyncHandler(async (req, res) => {
   if (order) {
     res.json(order);
   } else {
-    res.status(404);
-    throw new Error("Order not found");
+    return next(new ErrorResponse("no order found", 404));
   }
 });
 
 // @route   PUT /api/orders/:id/pay
 
-const updateOrderToPaid = asyncHandler(async (req, res) => {
+const updateOrderToPaid = asyncHandler(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
 
   if (order) {
@@ -70,8 +91,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 
     res.json(updatedOrder);
   } else {
-    res.status(404);
-    throw new Error("Order not found");
+    return next(new ErrorResponse("no order found", 404));
   }
 });
 
@@ -88,8 +108,7 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
 
     res.json(updatedOrder);
   } else {
-    res.status(404);
-    throw new Error("Order not found");
+    return next(new ErrorResponse("no order found", 404));
   }
 });
 
@@ -104,7 +123,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
 
 const getOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({}).populate("user", "id name");
-  res.json(orders);
+  res.status(200).json(orders);
 });
 
 module.exports = {
